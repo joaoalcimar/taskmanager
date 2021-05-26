@@ -17,6 +17,8 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   List _toDoList = [];
   final _toDoController = TextEditingController();
+  late Map<String, dynamic> _lastRemoved;
+  late int _lastRemovedPos;
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +36,11 @@ class _HomeState extends State<Home> {
               children: [
                 Expanded(
                     child: TextField(
-                      controller: _toDoController,
-                      decoration: InputDecoration(
-                          labelText: "Nova Tarefa",
-                          labelStyle: TextStyle(color: Colors.blueAccent)),
-                    )),
+                  controller: _toDoController,
+                  decoration: InputDecoration(
+                      labelText: "Nova Tarefa",
+                      labelStyle: TextStyle(color: Colors.blueAccent)),
+                )),
                 ElevatedButton(
                   onPressed: _addToDo,
                   child: Text("ADD"),
@@ -71,7 +73,7 @@ class _HomeState extends State<Home> {
       ),
       direction: DismissDirection.startToEnd,
       key: Key(DateTime.now().millisecondsSinceEpoch.toString()),
-      child:   CheckboxListTile(
+      child: CheckboxListTile(
         title: Text(_toDoList[index]["title"]),
         onChanged: (pressed) {
           setState(() {
@@ -81,54 +83,78 @@ class _HomeState extends State<Home> {
         },
         value: _toDoList[index]["ok"],
         secondary: CircleAvatar(
-            child: Icon(_toDoList[index]["ok"]
-                ? Icons.check
-                : Icons.error)),
+            child: Icon(_toDoList[index]["ok"] ? Icons.check : Icons.error)),
       ),
+      onDismissed: (direction) {
+
+        setState(() {
+          _lastRemoved = Map.from(_toDoList[index]);
+          _lastRemovedPos = index;
+          _toDoList.removeAt(index);
+
+          _saveData();
+
+          final message = SnackBar(
+              content: Text("Tarefa \"${_lastRemoved["title"]}\" removida"),
+            action: SnackBarAction(label: "Desfazer", onPressed: (){
+              setState(() {
+                _toDoList.insert(_lastRemovedPos, _lastRemoved);
+                _saveData();
+              });
+
+            },),
+              duration: Duration(seconds: 2),
+          );
+
+          ScaffoldMessenger.of(context).showSnackBar(message);
+
+        });
+
+
+      },
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
 
-
-@override
-void initState() {
-  super.initState();
-
-  _readData().then((data) {
-    setState(() {
-      _toDoList = json.decode(data);
+    _readData().then((data) {
+      setState(() {
+        _toDoList = json.decode(data);
+      });
     });
-  });
-}
+  }
 
-Future<File> _getFile() async {
-  final directory = await getApplicationDocumentsDirectory();
-  return File("${directory.path}/data.json");
-}
+  Future<File> _getFile() async {
+    final directory = await getApplicationDocumentsDirectory();
+    return File("${directory.path}/data.json");
+  }
 
-Future<File> _saveData() async {
-  String data = json.encode(_toDoList);
-  final file = await _getFile();
-  return file.writeAsString(data);
-}
-
-Future<String> _readData() async {
-  try {
+  Future<File> _saveData() async {
+    String data = json.encode(_toDoList);
     final file = await _getFile();
-    return file.readAsString();
-  } catch (e) {
-    return "Não foi possível ler o arquivo";
+    return file.writeAsString(data);
+  }
+
+  Future<String> _readData() async {
+    try {
+      final file = await _getFile();
+      return file.readAsString();
+    } catch (e) {
+      return "Não foi possível ler o arquivo";
+    }
+  }
+
+  void _addToDo() {
+    setState(() {
+      Map<String, dynamic> newToDo = Map();
+      newToDo["title"] = _toDoController.text;
+      _toDoController.text = "";
+      newToDo["ok"] = false;
+      _toDoList.add(newToDo);
+
+      _saveData();
+    });
   }
 }
-
-void _addToDo() {
-  setState(() {
-    Map<String, dynamic> newToDo = Map();
-    newToDo["title"] = _toDoController.text;
-    _toDoController.text = "";
-    newToDo["ok"] = false;
-    _toDoList.add(newToDo);
-
-    _saveData();
-  });
-}}
