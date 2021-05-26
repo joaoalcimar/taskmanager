@@ -16,6 +16,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   List _toDoList = [];
+  final _toDoController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -33,12 +34,13 @@ class _HomeState extends State<Home> {
               children: [
                 Expanded(
                     child: TextField(
+                  controller: _toDoController,
                   decoration: InputDecoration(
                       labelText: "Nova Tarefa",
                       labelStyle: TextStyle(color: Colors.blueAccent)),
                 )),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _addToDo,
                   child: Text("ADD"),
                   style: ElevatedButton.styleFrom(
                     primary: Colors.blueAccent,
@@ -55,7 +57,11 @@ class _HomeState extends State<Home> {
                   itemBuilder: (context, index) {
                     return CheckboxListTile(
                       title: Text(_toDoList[index]["title"]),
-                      onChanged: (bool? value) {},
+                      onChanged: (pressed) {
+                        setState(() {
+                          _toDoList[index]["ok"] = pressed ;
+                        });
+                      },
                       value: _toDoList[index]["ok"],
                       secondary: CircleAvatar(
                           child: Icon(_toDoList[index]["ok"]
@@ -87,4 +93,17 @@ class _HomeState extends State<Home> {
       return "Não foi possível ler o arquivo";
     }
   }
+
+  void _addToDo() {
+
+    setState(() {
+      Map<String, dynamic> newToDo = Map();
+      newToDo["title"] = _toDoController.text;
+      _toDoController.text = "";
+      newToDo["ok"] = false;
+      _toDoList.add(newToDo);
+    });
+
+  }
+
 }
