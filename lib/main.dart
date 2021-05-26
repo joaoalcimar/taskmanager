@@ -59,7 +59,8 @@ class _HomeState extends State<Home> {
                       title: Text(_toDoList[index]["title"]),
                       onChanged: (pressed) {
                         setState(() {
-                          _toDoList[index]["ok"] = pressed ;
+                          _toDoList[index]["ok"] = pressed;
+                          _saveData();
                         });
                       },
                       value: _toDoList[index]["ok"],
@@ -72,6 +73,17 @@ class _HomeState extends State<Home> {
         ],
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _readData().then((data) {
+      setState(() {
+        _toDoList = json.decode(data);
+      });
+    });
   }
 
   Future<File> _getFile() async {
@@ -95,15 +107,14 @@ class _HomeState extends State<Home> {
   }
 
   void _addToDo() {
-
     setState(() {
       Map<String, dynamic> newToDo = Map();
       newToDo["title"] = _toDoController.text;
       _toDoController.text = "";
       newToDo["ok"] = false;
       _toDoList.add(newToDo);
+
+      _saveData();
     });
-
   }
-
 }
