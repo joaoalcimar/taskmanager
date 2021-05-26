@@ -53,13 +53,29 @@ class _HomeState extends State<Home> {
             ),
           ),
           Expanded(
-              child: ListView.builder(
-                  padding: EdgeInsets.only(top: 10.0),
-                  itemCount: _toDoList.length,
-                  itemBuilder: buildItem))
+            child: RefreshIndicator( onRefresh: _refresh,
+                child: ListView.builder(
+                    padding: EdgeInsets.only(top: 10.0),
+                    itemCount: _toDoList.length,
+                    itemBuilder: buildItem)),)
         ],
       ),
     );
+  }
+
+  Future<Null> _refresh()async{
+    await Future.delayed(Duration(seconds: 1));
+
+    setState(() {
+      _toDoList.sort((a,b){
+        if(a["ok"] && !b["ok"]) return 1;
+        else if(!a["ok"] && !b["ok"]) return -1;
+        else return 0;
+      });
+
+      _saveData();
+    });
+
   }
 
   Widget buildItem(context, index) {
@@ -86,7 +102,6 @@ class _HomeState extends State<Home> {
             child: Icon(_toDoList[index]["ok"] ? Icons.check : Icons.error)),
       ),
       onDismissed: (direction) {
-
         setState(() {
           _lastRemoved = Map.from(_toDoList[index]);
           _lastRemovedPos = index;
@@ -95,22 +110,21 @@ class _HomeState extends State<Home> {
           _saveData();
 
           final message = SnackBar(
-              content: Text("Tarefa \"${_lastRemoved["title"]}\" removida"),
-            action: SnackBarAction(label: "Desfazer", onPressed: (){
-              setState(() {
-                _toDoList.insert(_lastRemovedPos, _lastRemoved);
-                _saveData();
-              });
-
-            },),
-              duration: Duration(seconds: 2),
+            content: Text("Tarefa \"${_lastRemoved["title"]}\" removida"),
+            action: SnackBarAction(
+              label: "Desfazer",
+              onPressed: () {
+                setState(() {
+                  _toDoList.insert(_lastRemovedPos, _lastRemoved);
+                  _saveData();
+                });
+              },
+            ),
+            duration: Duration(seconds: 2),
           );
 
           ScaffoldMessenger.of(context).showSnackBar(message);
-
         });
-
-
       },
     );
   }
