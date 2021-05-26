@@ -34,11 +34,11 @@ class _HomeState extends State<Home> {
               children: [
                 Expanded(
                     child: TextField(
-                  controller: _toDoController,
-                  decoration: InputDecoration(
-                      labelText: "Nova Tarefa",
-                      labelStyle: TextStyle(color: Colors.blueAccent)),
-                )),
+                      controller: _toDoController,
+                      decoration: InputDecoration(
+                          labelText: "Nova Tarefa",
+                          labelStyle: TextStyle(color: Colors.blueAccent)),
+                    )),
                 ElevatedButton(
                   onPressed: _addToDo,
                   child: Text("ADD"),
@@ -54,67 +54,81 @@ class _HomeState extends State<Home> {
               child: ListView.builder(
                   padding: EdgeInsets.only(top: 10.0),
                   itemCount: _toDoList.length,
-                  itemBuilder: (context, index) {
-                    return CheckboxListTile(
-                      title: Text(_toDoList[index]["title"]),
-                      onChanged: (pressed) {
-                        setState(() {
-                          _toDoList[index]["ok"] = pressed;
-                          _saveData();
-                        });
-                      },
-                      value: _toDoList[index]["ok"],
-                      secondary: CircleAvatar(
-                          child: Icon(_toDoList[index]["ok"]
-                              ? Icons.check
-                              : Icons.error)),
-                    );
-                  }))
+                  itemBuilder: buildItem))
         ],
       ),
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-
-    _readData().then((data) {
-      setState(() {
-        _toDoList = json.decode(data);
-      });
-    });
+  Widget buildItem(context, index) {
+    return Dismissible(
+      background: Container(
+        color: Colors.redAccent,
+        child: Align(
+          alignment: Alignment(-0.9, 0.0),
+          child: Icon(Icons.delete, color: Colors.white),
+        ),
+      ),
+      direction: DismissDirection.startToEnd,
+      key: Key(DateTime.now().millisecondsSinceEpoch.toString()),
+      child:   CheckboxListTile(
+        title: Text(_toDoList[index]["title"]),
+        onChanged: (pressed) {
+          setState(() {
+            _toDoList[index]["ok"] = pressed;
+            _saveData();
+          });
+        },
+        value: _toDoList[index]["ok"],
+        secondary: CircleAvatar(
+            child: Icon(_toDoList[index]["ok"]
+                ? Icons.check
+                : Icons.error)),
+      ),
+    );
   }
 
-  Future<File> _getFile() async {
-    final directory = await getApplicationDocumentsDirectory();
-    return File("${directory.path}/data.json");
-  }
 
-  Future<File> _saveData() async {
-    String data = json.encode(_toDoList);
-    final file = await _getFile();
-    return file.writeAsString(data);
-  }
 
-  Future<String> _readData() async {
-    try {
-      final file = await _getFile();
-      return file.readAsString();
-    } catch (e) {
-      return "Não foi possível ler o arquivo";
-    }
-  }
+@override
+void initState() {
+  super.initState();
 
-  void _addToDo() {
+  _readData().then((data) {
     setState(() {
-      Map<String, dynamic> newToDo = Map();
-      newToDo["title"] = _toDoController.text;
-      _toDoController.text = "";
-      newToDo["ok"] = false;
-      _toDoList.add(newToDo);
-
-      _saveData();
+      _toDoList = json.decode(data);
     });
+  });
+}
+
+Future<File> _getFile() async {
+  final directory = await getApplicationDocumentsDirectory();
+  return File("${directory.path}/data.json");
+}
+
+Future<File> _saveData() async {
+  String data = json.encode(_toDoList);
+  final file = await _getFile();
+  return file.writeAsString(data);
+}
+
+Future<String> _readData() async {
+  try {
+    final file = await _getFile();
+    return file.readAsString();
+  } catch (e) {
+    return "Não foi possível ler o arquivo";
   }
 }
+
+void _addToDo() {
+  setState(() {
+    Map<String, dynamic> newToDo = Map();
+    newToDo["title"] = _toDoController.text;
+    _toDoController.text = "";
+    newToDo["ok"] = false;
+    _toDoList.add(newToDo);
+
+    _saveData();
+  });
+}}
